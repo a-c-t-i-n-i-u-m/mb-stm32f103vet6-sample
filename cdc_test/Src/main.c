@@ -58,20 +58,11 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-/**
- * Application Mode Select
- * 0 = USART1 to VCP
- * 1 = VCP to USART1
- */
-
-#define MODE 0 // 0: UART to VCP, 1: VCP to UART
-
 
 /**
  * Get USB Connection Status
  */
 #define USB_IS_ACTIVE() (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED)
-
 
 /**
  * printf retartget to USART1
@@ -143,11 +134,12 @@ int main(void)
   MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN 2 */
-  HAL_PCDEx_SetConnectionState(hUsbDeviceFS.pData, connectionState);// init USB to Active
+  HAL_PCDEx_SetConnectionState(hUsbDeviceFS.pData, connectionState);// USB Activate
   HAL_Delay(3000);
   printf("Hello world.\r\n");
 
-  uint8_t buf;
+  uint8_t buf = 0;
+  uint8_t cbuf[100];
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -161,42 +153,36 @@ int main(void)
     // USART1 <=> VCP echo test
     if (USB_IS_ACTIVE())
     {
-#if MODE == 0
-      printf("\r\nVCP Connected, Send to VCP Console> ");
+      HAL_Delay(5000);
+
+      printf("\r\nVCP Connected > ");
       fflush(stdout);
+      VCP_write("\r\nVCP Connected > ", 18);
 
       while (USB_IS_ACTIVE())
       {
-        buf = 0;
+        // VCP to USART1
+        if (VCP_read(&buf, 1) == 1 && buf)
+        {
+          printf("\033[36m%c\033[0m", buf);
+          fflush(stdout);
+          VCP_write(&buf, 1);
+          buf = 0;
+        }
+
+        // USART1 to VCP
         HAL_UART_Receive(&huart1, &buf, 1, 1);
         if (buf)
         {
-          VCP_write(&buf, 1);
+          sprintf(cbuf, "\033[36m%c\033[0m", buf);
+          VCP_write(&cbuf, 10);
           printf("%c", buf);
           fflush(stdout);
+          buf = 0;
         }
       }
 
       printf("\r\nVCP Disconnected.\r\n");
-#else
-      HAL_Delay(5000);
-      printf("\r\nVCP Connected, Receive from VCP> ");
-      fflush(stdout);
-      VCP_write("\r\nVCP Connected, Send to UART Console> ", 39);
-
-      while (USB_IS_ACTIVE())
-      {
-        buf = 0;
-        if (VCP_read(&buf, 1) == 1 && buf)
-        {
-          printf("%c", buf);
-          fflush(stdout);
-          VCP_write(&buf, 1);
-        }
-      }
-
-      printf("\r\nVCP Disconnected.\r\n");
-#endif
     }
     else
     {
