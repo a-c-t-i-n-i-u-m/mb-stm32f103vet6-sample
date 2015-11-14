@@ -96,6 +96,11 @@ void FSMC_LCD_Write_Data(uint16_t data) {
 #define LCD_BACKLIGHT_ON() { GPIOB->BSRR = GPIO_PIN_11; }
 #define LCD_BACKLIGHT_OFF() { GPIOB->BRR = GPIO_PIN_11; }
 
+// alias
+#define LCD_Write_REG FSMC_LCD_Write_Register
+#define LCD_Write_Command FSMC_LCD_Write_Command
+#define LCD_Write_Data FSMC_LCD_Write_Data
+
 void SSD1289_Init() {
 
   LCD_BACKLIGHT_ON()
@@ -107,41 +112,41 @@ void SSD1289_Init() {
   // Power supply setting
 
   // Set R07h at 0021h
-  FSMC_LCD_Write_Register(0x07, 0x0021);
+  LCD_Write_REG(0x07, 0x0021);
   HAL_Delay(1);  // s
-  FSMC_LCD_Write_Register(0x00, 0x0001);
+  LCD_Write_REG(0x00, 0x0001);
   HAL_Delay(1);  // s
 
   // Set R07h at 0023h
-  FSMC_LCD_Write_Register(0x07, 0x0023);
+  LCD_Write_REG(0x07, 0x0023);
   HAL_Delay(1);  // s
 
   // Set R10h at 0000h
-  FSMC_LCD_Write_Register(0x10, 0x0000);
+  LCD_Write_REG(0x10, 0x0000);
   HAL_Delay(1);  // s
 
   // Wait 30ms
   HAL_Delay(30);  // s
 
   // Set R07h at 0033h
-  FSMC_LCD_Write_Register(0x07, 0x0033);
+  LCD_Write_REG(0x07, 0x0033);
   HAL_Delay(1);  // s
 
   // Entry Mode setting (R11h)
-  FSMC_LCD_Write_Register(0x0011, 0x6070);
+  LCD_Write_REG(0x0011, 0x6070);
   HAL_Delay(1);  // s
 
   // LCD driver AC setting (R02h)
-  FSMC_LCD_Write_Register(0x0002, 0x0600);
+  LCD_Write_REG(0x0002, 0x0600);
   HAL_Delay(1);  // s
 
   // Driver Output Control (R01h)
-  FSMC_LCD_Write_Register(0x0001,
+  LCD_Write_REG(0x0001,
       (LCD_R01_RL << 14) | (LCD_R01_REV << 13) | (LCD_R01_CAD << 12) | (LCD_R01_BGR << 11) | (LCD_R01_SM << 10) | (LCD_R01_TB << 9) | LCD_R01_MUX);
   HAL_Delay(1);
 
   // RAM data write (R22h)
-  FSMC_LCD_Write_Command(0x0022);  // s
+  LCD_Write_Command(0x0022);  // s
 
   // Display ON and start to write RAM
   HAL_Delay(100);
@@ -152,11 +157,11 @@ void SSD1289_Init() {
 #define yellow    0x07FF
 #define magneta   0xF81F
 #define cyan      0xFFE0
-#define red       0X001F
-#define green     0X07E0
-#define blue      0XF800
-#define white     0XFFFF
-#define black     0X3185
+#define red       0x001F
+#define green     0x07E0
+#define blue      0xF800
+#define white     0xFFFF
+#define black     0x3185
 
 const unsigned char font_5x7[][5] = { { 0x00, 0x00, 0x00, 0x00, 0x00 }, // „„‚„€„q„u„|
     { 0x00, 0x00, 0x4f, 0x00, 0x00 },     // !
@@ -254,11 +259,6 @@ const unsigned char font_5x7[][5] = { { 0x00, 0x00, 0x00, 0x00, 0x00 }, // „„‚„
     { 0x00, 0x41, 0x36, 0x08, 0x00 },     // }
     { 0x02, 0x01, 0x02, 0x02, 0x01 }     // ~
 };
-
-// alias
-#define LCD_Write_REG FSMC_LCD_Write_Register
-#define LCD_Write_Command FSMC_LCD_Write_Command
-#define LCD_Write_Data FSMC_LCD_Write_Data
 
 void LCD_SetCursor(uint16_t x, uint16_t y) {
   LCD_Write_REG(0x004E,x)
@@ -519,9 +519,9 @@ int main(void) {
   SSD1289_Init();
   LCD_Clear(black);
 
-  LCD_Draw_Rectangle(0, 0, 10, 10, red, black);
-  LCD_Draw_Rectangle(10, 10, 20, 20, blue, black);
-  LCD_Draw_Rectangle(20, 20, 30, 30, white, black);
+  LCD_Draw_Rectangle(0, 0, 10, 10, red, 1);
+  LCD_Draw_Rectangle(10, 10, 20, 20, blue, 1);
+  LCD_Draw_Rectangle(20, 20, 30, 30, white, 1);
 
   LCD_WriteString_5x7(20, 240 - 30, "Hello world.", red, black, 0, 2);
   LCD_WriteString_5x7(20, 240 - 30 - 20, "STM32F103VET6", cyan, black, 0, 2);
