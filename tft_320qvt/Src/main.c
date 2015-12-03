@@ -34,6 +34,7 @@
 #include "stm32f1xx_hal.h"
 
 /* USER CODE BEGIN Includes */
+#include <stdlib.h>
 #include "lcd.h"
 #include "lcd_font.h"
 #include "tsc2046.h"
@@ -101,7 +102,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   char buf[100];
-  uint16_t xpos, ypos;
+  int16_t xpos, ypos;
 
   while (1)
   {
@@ -112,19 +113,23 @@ int main(void)
     LCD_drawRect(0, 0, 10, 10);
 
     while(!Is_Touhcing());
-    HAL_Delay(20);
 
     LCD_setColor(VGA_GREEN);
     LCD_drawRect(0, 0, 10, 10);
 
     while (Is_Touhcing())
     {
-      xpos = Touch_Get_LCD_X();
-      ypos = Touch_Get_LCD_Y();
-      sprintf(buf, "(x,y)=(%03d, %03d)", xpos, ypos);
+      // read
+      xpos = TSC2046_Get_Position_X();
+      //xpos = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X);
+      ypos = TSC2046_Get_Position_Y();
+      //ypos = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y);
+      sprintf(buf, "(x,y)=(%04d, %04d)", xpos, ypos);
+
+      // print
       LCD_print(buf, 20, 300, 0);
-      LCD_fillCircle(xpos, ypos, 2);
-      HAL_Delay(5);
+      //LCD_setColor(rand() & 0xffff);
+      LCD_fillCircle(xpos, ypos, 4);
     }
   }
   /* USER CODE END 3 */

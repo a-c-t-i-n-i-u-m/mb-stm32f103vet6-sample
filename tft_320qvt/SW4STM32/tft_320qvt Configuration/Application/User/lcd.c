@@ -30,16 +30,6 @@ void FSMC_LCD_Write_Data(uint16_t data) {
 #define LCD_Write_Data FSMC_LCD_Write_Data
 #define LCD_Write_Register FSMC_LCD_Write_Register
 
-// GPIO macro
-#define LCD_RESET() {\
-  LCD_RESET_GPIO_PORT->BRR = LCD_RESET_GPIO_PIN;\
-  HAL_Delay(100);\
-  LCD_RESET_GPIO_PORT->BSRR = LCD_RESET_GPIO_PIN;\
-  HAL_Delay(100);\
-}
-#define LCD_BACKLIGHT_ON() { LCD_BACKLIGHT_PORT->BSRR = LCD_BACKLIGHT_PIN; }
-#define LCD_BACKLIGHT_OFF() { LCD_BACKLIGHT_PORT->BRR = LCD_BACKLIGHT_PIN; }
-
 // initialize SSD1289
 volatile uint8_t LCD_Orient = LCD_ORIENTATION_PORTRAIT;
 
