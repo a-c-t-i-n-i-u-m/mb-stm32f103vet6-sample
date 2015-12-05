@@ -42,10 +42,10 @@ extern SPI_HandleTypeDef hspi1;
  *   3: Averaging the Closest Data; result = sum(closest_two_data(samples))/2
  *   4: Touch Screen Panel Pressure; if (pressure > threshold) { result = sample; }
  */
-#define TSC2046_SAMPLING_MODE 1
+#define TSC2046_SAMPLING_MODE 2
 
 // maximum number of sampling, for average method
-#define TSC2046_MAX_SAMPLE 4
+#define TSC2046_MAX_SAMPLE 5
 
 // pressure threshold for mode.4
 #define TSC2046_PRESSURE_THRESHOLD 0
@@ -57,14 +57,18 @@ extern SPI_HandleTypeDef hspi1;
 // calibration mode
 // 0. http://www.ti.com/lit/an/slyt277/slyt277.pdf
 // 1. single value N degree least squares method
-#define TSC2046_CALIBRATION_MODE 1
+// 2. Linear interpolation
+#define TSC2046_CALIBRATION_MODE 2
 
-// config for mode.1
+// maximum number of sampling, while calibration
+#define TSC2046_CAL_MAX_SAMPLE 25
+
+// parameter for mode.1
 #define TSC2046_CAL_DEG 3     // degree of approximation curve
-#define TSC2046_CAL_POINTS 5  // number of samples
+#define TSC2046_CAL_POINTS 8  // number of samples
 
 // display resolution
-#define TSC2046_WIDTH 240
+#define TSC2046_WIDTH  240
 #define TSC2046_HEIGHT 320
 
 // LCD draw interface wrapper for calibration
@@ -144,7 +148,7 @@ void TSC2046_Init();
 uint8_t Is_Touhcing();
 
 uint16_t TSC2046_Read(uint8_t command);
-int16_t TSC2046_Read_Filter(uint8_t command);
+int16_t TSC2046_Read_Filter(uint8_t command, uint8_t maxSample);
 void TSC2046_Calibration();
 
 int16_t TSC2046_Get_Position_X();

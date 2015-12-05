@@ -102,25 +102,31 @@ uint8_t Is_Touhcing()
  * http://www.ti.com/lit/an/sbaa155a/sbaa155a.pdf
  *  args
  *   uint8_t command: Control byte
+ *   uint8_t maxSample: maximum number of sampling
  *  return
  *   int16_t: if -1, error, or, 8bit 0-(2^8-1) / 12bit 0-(2^12-1)
  */
-int16_t TSC2046_Read_Filter(uint8_t command)
+int16_t TSC2046_Read_Filter(uint8_t command, uint8_t maxSample)
 {
+  if (maxSample < 1)
+  {
+    return -1;
+  }
+
   int16_t result = 0, i = 0;
-  uint16_t buf[TSC2046_MAX_SAMPLE];
+  uint16_t buf[maxSample];
 
 #if TSC2046_SAMPLING_MODE == 0
   // simple average
   uint32_t value = 0;
-  while (++i <= TSC2046_MAX_SAMPLE && Is_Touhcing())
+  while (++i <= maxSample && Is_Touhcing())
   {
     value += TSC2046_Read(command);
   }
   result = value / i;
 #elif TSC2046_SAMPLING_MODE == 1
   // weighted average
-  for (i = 0; i < TSC2046_MAX_SAMPLE && Is_Touhcing(); i++)
+  for (i = 0; i < maxSample && Is_Touhcing(); i++)
   {
     buf[i] = TSC2046_Read(command);
   }
@@ -140,7 +146,7 @@ int16_t TSC2046_Read_Filter(uint8_t command)
   }
 #elif TSC2046_SAMPLING_MODE == 2
   // median
-  for (i = 0; i < TSC2046_MAX_SAMPLE && Is_Touhcing(); i++)
+  for (i = 0; i < maxSample && Is_Touhcing(); i++)
   {
     buf[i] = TSC2046_Read(command);
   }
@@ -170,7 +176,7 @@ int16_t TSC2046_Read_Filter(uint8_t command)
   }
 #elif TSC2046_SAMPLING_MODE == 3
   // averaging the closest data
-  for (i = 0; i < TSC2046_MAX_SAMPLE && Is_Touhcing(); i++)
+  for (i = 0; i < maxSample && Is_Touhcing(); i++)
   {
     buf[i] = TSC2046_Read(command);
   }
@@ -273,8 +279,8 @@ void TSC2046_Calibration()
 
     // read
     while (!Is_Touhcing());
-    p[i].vx = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X);
-    p[i].vy = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y);
+    p[i].vx = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X, TSC2046_CAL_MAX_SAMPLE);
+    p[i].vy = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y, TSC2046_CAL_MAX_SAMPLE);
 
     // wait release
     while (Is_Touhcing());
@@ -324,8 +330,8 @@ void TSC2046_Calibration()
 int16_t TSC2046_Get_Position_X()
 {
   // X = alphaX * rawX + betaX * rawY + deltaX;
-  int16_t rawX = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X),
-          rawY = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y);
+  int16_t rawX = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X, TSC2046_MAX_SAMPLE),
+          rawY = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y, TSC2046_MAX_SAMPLE);
   if (rawX < 0 || rawY < 0)
   {
     return -1;
@@ -339,8 +345,8 @@ int16_t TSC2046_Get_Position_X()
 int16_t TSC2046_Get_Position_Y()
 {
   // Y = alphaY * rawX + betaY * rawY + deltaY;
-  uint16_t rawX = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X),
-           rawY = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y);
+  uint16_t rawX = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X, TSC2046_MAX_SAMPLE),
+           rawY = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y, TSC2046_MAX_SAMPLE);
   if (rawX < 0 || rawY < 0)
   {
     return -1;
@@ -487,8 +493,8 @@ void TSC2046_Calibration()
 
     // read
     while (!Is_Touhcing());
-    x[i] = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X);
-    y[i] = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y);
+    x[i] = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X, TSC2046_CAL_MAX_SAMPLE);
+    y[i] = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y, TSC2046_CAL_MAX_SAMPLE);
 
     // wait release
     while (Is_Touhcing());
@@ -521,7 +527,7 @@ void TSC2046_Calibration()
 int16_t TSC2046_Get_Position_X()
 {
   // interpolated value
-  int16_t rawX = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X), i;
+  int16_t rawX = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X, TSC2046_MAX_SAMPLE), i;
   if (rawX < 0)
   {
     return -1;
@@ -538,7 +544,7 @@ int16_t TSC2046_Get_Position_X()
 int16_t TSC2046_Get_Position_Y()
 {
   // interpolated value
-  uint16_t rawY = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y), i;
+  uint16_t rawY = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y, TSC2046_MAX_SAMPLE), i;
   if (rawY < 0)
   {
     return -1;
@@ -551,5 +557,151 @@ int16_t TSC2046_Get_Position_Y()
 
   // clip to LCD resolution
   return y < 0 ? 0 : (y < TSC2046_HEIGHT ? y : TSC2046_HEIGHT - 1);
+}
+
+#elif TSC2046_CALIBRATION_MODE == 2
+
+typedef struct {
+  double scaleX;
+  double scaleY;
+  int16_t offsetX;
+  int16_t offsetY;
+} _TSC2046_Cal_Configs;
+
+volatile _TSC2046_Cal_Configs _vcal = {TSC2046_WIDTH / 4096, TSC2046_HEIGHT / 4096, 0, 0};
+
+void _TSC2046_Load_Cal_Data()
+{
+  // _vcal = read_from_flash(addr);
+}
+
+void _TSC2046_Save_Cal_Data()
+{
+  // write_to_flash(addr, &_vcal, sizeof(_vcal));
+}
+
+// three point calibration
+void TSC2046_Calibration()
+{
+  // message
+  TOUCH_CAL_LCD_CLEAR();
+  TOUCH_CAL_LCD_DRAW_STRING("Start Calibration...", 10, 10);
+  while (!Is_Touhcing());
+  while (Is_Touhcing());
+
+  // message
+  TOUCH_CAL_LCD_CLEAR();
+
+  // generate marker points
+  uint16_t points[9][2] = {
+      {40, 40},
+      {120, 40},
+      {200, 40},
+      {40, 160},
+      {120, 160},
+      {200, 160},
+      {40, 280},
+      {120, 280},
+      {200, 280}
+  };
+  int16_t values[9][2];
+
+  int i = 0;
+  while (i < 9)
+  {
+    // show marker
+    TOUCH_CAL_LCD_DRAW_STRING("Please touch marker...", 10, 10);
+    TOUCH_CAL_LCD_DRAW_CIRCLE(points[i][0], points[i][1], 5);
+
+    // read
+    while (!Is_Touhcing());
+
+    values[i][0] = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X, TSC2046_CAL_MAX_SAMPLE);
+    values[i][1] = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y, TSC2046_CAL_MAX_SAMPLE);
+
+    // wait release
+    while (Is_Touhcing());
+
+    // check value
+    if (values[i][0] > 0 && values[i][1] > 0)
+    {
+      TOUCH_CAL_LCD_CLEAR();
+      i++;
+    }
+    else
+    {
+      TOUCH_CAL_LCD_DRAW_STRING("Touch error, please retry.", 10, 20);
+    }
+  }
+
+  // scale
+  double sx = 0, sy = 0;
+  double dpx,dpy,dvx,dvy, sxdiv = 0, sydiv = 0;
+
+  for (i = 1; i < 9; i++)
+  {
+    dpx = points[i][0] - points[0][0];
+    dvx = values[i][0] - values[0][0];
+    dpy = points[0][1] - points[i][1];
+    dvy = values[0][1] - values[i][1];
+
+    if (dpx != 0 && dvx != 0)
+    {
+      sx += fabs(dpx / dvx);
+      sxdiv++;
+    }
+    if (dpy != 0 && dvy != 0)
+    {
+      sy += fabs(dpy / dvy);
+      sydiv++;
+    }
+  }
+  sx /= sxdiv;
+  sy /= sydiv;
+
+  // offset
+  uint16_t minx = 4096, miny = 4096;
+  for (i = 0; i < 9; i++)
+  {
+    if (minx > values[i][0])
+    {
+      minx = values[i][0];
+    }
+    if (miny > values[i][1])
+    {
+      miny = values[i][1];
+    }
+  }
+  double ox = (double)(minx * sx) - points[0][0];
+  double oy = (double)(miny * sy) - points[0][1];
+
+  // save
+  _vcal.scaleX = sx;
+  _vcal.scaleY = sy;
+  _vcal.offsetX = (int16_t)ox;
+  _vcal.offsetY = (int16_t)oy;
+  _TSC2046_Save_Cal_Data();
+}
+
+int16_t TSC2046_Get_Position_X()
+{
+  int16_t raw = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X, TSC2046_MAX_SAMPLE);
+  if (raw < 0)
+  {
+    return -1;
+  }
+  int16_t v = raw * _vcal.scaleX - _vcal.offsetX;
+  return v < 0 ? 0 : (v < TSC2046_WIDTH ? v : TSC2046_WIDTH - 1);
+}
+
+int16_t TSC2046_Get_Position_Y()
+{
+  int16_t raw = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y, TSC2046_MAX_SAMPLE);
+  if (raw < 0)
+  {
+    return -1;
+  }
+  int16_t v = TSC2046_HEIGHT - (raw * _vcal.scaleY - _vcal.offsetY);
+  return v < 0 ? 0 : (v < TSC2046_HEIGHT ? v : TSC2046_HEIGHT - 1);
 }
 #endif

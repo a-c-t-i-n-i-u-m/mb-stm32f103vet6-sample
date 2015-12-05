@@ -97,6 +97,7 @@ int main(void)
 
   TSC2046_Init();
   TSC2046_Calibration();
+  LCD_fillScr(VGA_BLACK);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,23 +115,37 @@ int main(void)
 
     while(!Is_Touhcing());
 
-    LCD_setColor(VGA_GREEN);
-    LCD_drawRect(0, 0, 10, 10);
-
     while (Is_Touhcing())
     {
       // read
       xpos = TSC2046_Get_Position_X();
-      //xpos = TSC2046_Read_Filter(TSC2046_COMMAND_READ_X);
       ypos = TSC2046_Get_Position_Y();
-      //ypos = TSC2046_Read_Filter(TSC2046_COMMAND_READ_Y);
-      sprintf(buf, "(x,y)=(%04d, %04d)", xpos, ypos);
+
+      // clear
+      if (xpos > LCD_WIDTH - 20 && ypos > LCD_HEIGHT - 20)
+      {
+        LCD_fillScr(VGA_BLACK);
+      }
 
       // print
+      sprintf(buf, "(x,y)=(%04d, %04d)", xpos, ypos);
+      LCD_setColor(VGA_RED);
+      LCD_setBackColor(VGA_BLACK);
       LCD_print(buf, 20, 300, 0);
-      //LCD_setColor(rand() & 0xffff);
-      LCD_fillCircle(xpos, ypos, 4);
+
+      // draw pen
+      LCD_setColor(rand() | 0b0111101111101111);
+      LCD_fillCircle(xpos, ypos, 3);
+
+      // clear button
+      LCD_setColor(VGA_WHITE);
+      LCD_fillRect(LCD_WIDTH - 20, LCD_HEIGHT - 20, LCD_WIDTH - 1, LCD_HEIGHT - 1);
+
+      // pen indicator
+      LCD_setColor(VGA_GREEN);
+      LCD_drawRect(0, 0, 10, 10);
     }
+
   }
   /* USER CODE END 3 */
 
@@ -214,11 +229,17 @@ void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct;
 
   /* GPIO Ports Clock Enable */
+  __GPIOE_CLK_ENABLE();
   __GPIOC_CLK_ENABLE();
   __GPIOA_CLK_ENABLE();
-  __GPIOE_CLK_ENABLE();
   __GPIOB_CLK_ENABLE();
   __GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pins : PE2 PE3 PE4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PC4 */
   GPIO_InitStruct.Pin = GPIO_PIN_4;
@@ -245,6 +266,15 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 

@@ -41,7 +41,7 @@
 									<listOptionValue builtIn="false" value="..\..\..\Drivers\CMSIS\Device\ST\STM32F1xx\Include" />
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Application/User}&quot;" />
 									<listOptionValue builtIn="false" value="" />
-								<listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /></option>
+								<listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /></option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1417741531" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))" />
 									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))" />
@@ -97,7 +97,7 @@
 									<listOptionValue builtIn="false" value="..\..\..\Drivers\CMSIS\Include" />
 									<listOptionValue builtIn="false" value="..\..\..\Drivers\CMSIS\Device\ST\STM32F1xx\Include" />
 									<listOptionValue builtIn="false" value="" />
-								<listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /></option>
+								<listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /><listOptionValue builtIn="false" value="" /></option>
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.1521448582" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c" />
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s.1059978277" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s" />
 							</tool>
